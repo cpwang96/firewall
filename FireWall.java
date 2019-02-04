@@ -20,6 +20,9 @@ public class FireWall {
 	}
 
 	public boolean accept_packet(String direction, String protocal, Integer port, String ip_address) {
+		if (!FireWall.checkingParameters(direction, protocal, port, ip_address)) {
+			return false;
+		}
 		for (String entry : data) {
 			String[] segments = entry.split(",");
 			String dir = segments[0];
@@ -72,6 +75,61 @@ public class FireWall {
 		return false;
 	}
 
+	public static boolean checkingParameters(String direction, String protocal, Integer port, String ip_address) {
+		if (direction == null || protocal == null || port == null || ip_address == null) {
+			return false;
+		}
+		if (!direction.equals("inbound") && !direction.equals("outbound")) {
+			return false;
+		}
+		if (!protocal.equals("tcp") && !protocal.equals("udp")) {
+			return false;
+		}
+		if (port < 1 || port > 65535) {
+			return false;
+		}
+		if (!FireWall.isIpLegal(ip_address)) {
+			return false;
+		}
+		return true;
+	}
+
+	public static boolean isIpLegal(String str) {
+		if (str.charAt(0) == '.' || str.charAt(str.length() - 1) == '.') {
+			return false;
+		}
+
+		String[] arr = str.split("\\.");
+		if (arr.length != 4) {
+			return false;
+		}
+
+		for (int i = 0; i < arr.length; i++) {
+			if (arr[i].length() > 1 && arr[i].charAt(0) == '0') {
+				return false;
+			}
+
+			for (int j = 0; j < arr[i].length(); j++) {
+				if (arr[i].charAt(j) < '0' || arr[i].charAt(j) > '9') {
+					return false;
+				}
+			}
+		}
+		for (int i = 0; i < arr.length; i++) {
+			int tmp = Integer.parseInt(arr[i]);
+			if (i == 0) {
+				if (tmp < 1 || tmp > 255) {
+					return false;
+				}
+			}
+			else {
+				if (tmp < 0 || tmp > 255) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	public static void main(String[] args) {
 		FireWall fw = new FireWall("/Users/cpwang/desktop/test.csv");
 		System.out.println(fw.accept_packet("inbound", "tcp", 80, "192.168.1.2"));
